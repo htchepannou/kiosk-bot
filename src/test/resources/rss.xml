@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<rss version="2.0" xmlns:content="http://purl.org/rss/1.0/modules/content/">
+    <channel>
+        <title>RSS Title</title>
+        <description>This is an example of an RSS feed</description>
+        <link>http://www.example.com/main.html</link>
+        <lastBuildDate>Mon, 06 Sep 2010 00:01:00 +0000 </lastBuildDate>
+        <pubDate>Sun, 06 Sep 2009 16:20:00 +0000</pubDate>
+        <ttl>1800</ttl>
+
+        <item>
+            <title>Example entry</title>
+            <description>Here is some text containing an interesting description.</description>
+            <link>http://www.example.com/blog/post/1</link>
+            <guid isPermaLink="true">7bd204c6-1655-4c27-aeee-53f933c5395f</guid>
+            <pubDate>Sun, 06 Sep 2009 16:20:00 +0000</pubDate>
+            <language>fr_CA</language>
+            <category>sport</category>
+            <category>football</category>
+            <content:encoded><![CDATA[This is a <a href="http://example.com/">link</a>.]]></content:encoded>
+        </item>
+        <item>
+            <title>Example entry #2</title>
+            <description>Here is some text containing an interesting description #2</description>
+            <link>http://www.example.com/blog/post/2</link>
+            <guid isPermaLink="true">7bd204c6-1655-4c27-aeee-53f933c5395f</guid>
+            <pubDate>Sun, 07 Sep 2009 16:20:00 +0000</pubDate>
+            <language>en_US</language>
+            <content:encoded><![CDATA[Hello world.]]></content:encoded>
+        </item>
+
+    </channel>
+</rss>

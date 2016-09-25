@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<rss version="2.0">
+    <channel>
+        <title>$escape.escapeXml($website.name)</title>
+        <link>$website.url</link>
+        <lastBuildDate>$dateFormat.format($now)</lastBuildDate>
+        <pubDate>$dateFormat.format($now)</pubDate>
+        <ttl>1800</ttl>
+
+        #foreach($item in $items)
+
+            <item>
+                <title>$escape.escapeXml($item.title)</title>
+                #if ($item.description)
+                    <description>$escape.escapeXml($item.description)</description>
+                #end
+                <link>$item.link</link>
+                <pubDate>$dateFormat.format($item.publishedDate)</pubDate>
+            </item>
+
+        #end
+
+    </channel>
+</rss>
