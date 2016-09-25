@@ -12,6 +12,7 @@ import org.apache.commons.lang.StringEscapeUtils;
 import org.apache.velocity.app.VelocityEngine;
 import org.apache.velocity.context.Context;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
@@ -24,8 +25,8 @@ import org.mockito.stubbing.Answer;
 import java.io.OutputStream;
 import java.io.Writer;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Date;
-import java.util.List;
 
 import static com.tchepannou.kiosk.bot.Fixture.createRssItem;
 import static com.tchepannou.kiosk.bot.Fixture.createWebsite;
@@ -108,12 +109,50 @@ public class RssGeneratorTest {
 
         assertThat(context.getValue().get("dateFormat")).isNotNull();
         assertThat(context.getValue().get("escape")).isInstanceOf(StringEscapeUtils.class);
-        assertThat((List) context.getValue().get("items")).containsAll(Arrays.asList(item1, item2));
+        assertThat((Collection) context.getValue().get("items")).containsAll(Arrays.asList(item1, item2));
         assertThat(context.getValue().get("now")).isEqualTo(now);
         assertThat(context.getValue().get("website")).isEqualTo(website);
     }
 
     @Test
+    public void shouldNotGenerateSameArticleTwice() throws Exception {
+        // Given
+        final WebsiteDto website = createWebsite();
+        website.setArticleUrlPrefix(null);
+        website.setArticleUrlSuffix(null);
+
+        final String html = "foo";
+        doAnswer(get(html)).when(httpService).get(any(), any());
+        when(htmlService.extractUrls(html, website)).thenReturn(
+                Arrays.asList(
+                        website.getUrl() + "/articles/foo.html",
+                        website.getUrl() + "/articles/bar.html"
+                )
+        );
+
+        final RssItem item1 = createRssItem();
+        final RssItem item2 = createRssItem();
+        item2.setTitle(item1.getTitle());
+        when(htmlService.toRssItem(any(), any(), any()))
+                .thenReturn(item1)
+                .thenReturn(item2)
+        ;
+
+        // When
+        final String key = generator.generate(website);
+
+        // Then
+        final ArgumentCaptor<String> template = ArgumentCaptor.forClass(String.class);
+        final ArgumentCaptor<String> encoding = ArgumentCaptor.forClass(String.class);
+        final ArgumentCaptor<Context> context = ArgumentCaptor.forClass(Context.class);
+        final ArgumentCaptor<Writer> writer = ArgumentCaptor.forClass(Writer.class);
+        verify(velocity).mergeTemplate(template.capture(), encoding.capture(), context.capture(), writer.capture());
+
+        assertThat((Collection) context.getValue().get("items")).containsAll(Arrays.asList(item1));
+    }
+
+    @Test
+    @Ignore
     public void shouldGenerateCameroonTribune() throws Exception {
         final UrlServiceProvider provider = new UrlServiceProvider();
         provider.register("http://", new HttpService());
