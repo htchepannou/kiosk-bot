@@ -36,7 +36,7 @@ public class Fixture {
         item.setLanguage("FR");
         item.setLink("http://www.item.com/" + nextUid());
         item.setPublishedDate(new Date());
-        item.setTitle("This is the title");
+        item.setTitle("This is the title #" + (++uid));
 
         return item;
     }
