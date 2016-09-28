@@ -11,7 +11,6 @@ import com.tchepannou.kiosk.core.service.UrlServiceProvider;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.xml.sax.SAXException;
 
-import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 import java.io.ByteArrayInputStream;
@@ -21,6 +20,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutorService;
 
 public class RssService {
     @Autowired
@@ -44,39 +44,115 @@ public class RssService {
     @Autowired
     RssGenerator rssGenerator;
 
-    public void fetch() throws RssException {
-        try {
-            final SAXParserFactory factory = SAXParserFactory.newInstance();
-            final SAXParser sax = factory.newSAXParser();
+    @Autowired
+    ExecutorService executorService;
 
-            final List<FeedDto> feeds = feedService.getAllRssFeeds();
-            for (final FeedDto feed : feeds) {
-                final List<RssItem> items = fetch(feed, sax);
-                publish(feed, items);
-            }
-        } catch (SAXException | ParserConfigurationException e) {
-            throw new RssException("XML error", e);
+
+    //-- Fetch
+    public void fetch() throws RssException {
+        final List<FeedDto> feeds = feedService.getAllRssFeeds();
+        for (final FeedDto feed : feeds) {
+            executorService.submit(createFectcher(feed));
         }
     }
 
+    private Runnable createFectcher(final FeedDto feed){
+        return new Runnable() {
+            @Override
+            public void run() {
+                try {
+
+                    final SAXParserFactory factory = SAXParserFactory.newInstance();
+                    final SAXParser sax = factory.newSAXParser();
+
+                    final List<RssItem> items = fetch(feed, sax);
+                    publish(feed, items);
+
+                } catch (Exception e) {
+                    throw new RssException("XML error", e);
+                }
+            }
+        };
+    }
+
+    private List<RssItem> fetch(final FeedDto feed, final SAXParser sax) throws SAXException {
+        List<RssItem> items = Collections.emptyList();
+        final ByteArrayOutputStream out = new ByteArrayOutputStream();
+
+        try {
+            final String url = feed.getUrl();
+            urlServiceProvider.get(url).get(url, out);
+
+            final RssSaxHandler handler = new RssSaxHandler();
+            sax.parse(new ByteArrayInputStream(out.toByteArray()), handler);
+            items = handler.getItems();
+            log(feed, items, null);
+
+        } catch (final IOException ex) {
+
+            log(feed, Collections.emptyList(), ex);
+
+        }
+
+        return items;
+    }
+
+    private void publish(final FeedDto feed, final List<RssItem> items) {
+
+        for (final RssItem item : items) {
+            publisherService.publish(feed, item);
+        }
+    }
+
+    private void log(final FeedDto feed, final List<RssItem> items, final Throwable ex) {
+        final LogService log = new LogService(timeService);
+
+        log.add("Step", "Fetch");
+        log.add("ArticleCount", items.size());
+        log.add("FeedId", feed.getId());
+        log.add("FeedName", feed.getName());
+        log.add("FeedURL", feed.getUrl());
+
+        if (ex != null) {
+            log.add("Exception", ex.getClass().getName());
+            log.add("ExceptionMessage", ex.getMessage());
+
+            log.log(ex);
+        } else {
+            log.log();
+        }
+    }
+
+
+    //-- Generate
     public void generate() {
         final Map<WebsiteDto, FeedDto> feeds = loadFeedsByWebsite();
         final List<WebsiteDto> websites = websiteService.getAllWebsite();
         for (final WebsiteDto website : websites) {
-            final FeedDto feed = feeds.get(website);
-            if (feed == null || !feed.getUrl().startsWith("s3://")) {
-                continue;
-            }
-
-            Throwable ex = null;
-            try {
-                rssGenerator.generate(website);
-            } catch (final Exception e) {
-                ex = e;
-            } finally {
-                log(website, ex);
-            }
+            executorService.execute(createGenerator(website, feeds));
         }
+    }
+
+    private Runnable createGenerator(final WebsiteDto website, final Map<WebsiteDto, FeedDto> feeds){
+        return new Runnable() {
+            @Override
+            public void run() {
+                final FeedDto feed = feeds.get(website);
+                if (feed == null || !feed.getUrl().startsWith("s3://")) {
+                    return;
+                }
+
+                Throwable ex = null;
+                try {
+
+                    rssGenerator.generate(website);
+                } catch (final Exception e) {
+                    ex = e;
+                } finally {
+                    log(website, ex);
+                }
+            }
+        };
     }
 
     private Map<WebsiteDto, FeedDto> loadFeedsByWebsite() {
@@ -106,50 +182,4 @@ public class RssService {
         }
     }
 
-    private List<RssItem> fetch(final FeedDto feed, final SAXParser sax) throws SAXException {
-        List<RssItem> items = Collections.emptyList();
-        final ByteArrayOutputStream out = new ByteArrayOutputStream();
-
-        try {
-            final String url = feed.getUrl();
-            urlServiceProvider.get(url).get(url, out);
-
-            final RssSaxHandler handler = new RssSaxHandler();
-            sax.parse(new ByteArrayInputStream(out.toByteArray()), handler);
-            items = handler.getItems();
-            log(feed, items, null);
-
-        } catch (final IOException ex) {
-
-            log(feed, Collections.emptyList(), ex);
-
-        }
-
-        return items;
-    }
-
-    private void log(final FeedDto feed, final List<RssItem> items, final Throwable ex) {
-        final LogService log = new LogService(timeService);
-
-        log.add("FeedURL", feed.getUrl());
-        log.add("FeedId", feed.getId());
-        log.add("FeedName", feed.getName());
-        log.add("ArticleCount", items.size());
-
-        if (ex != null) {
-            log.add("Exception", ex.getClass().getName());
-            log.add("ExceptionMessage", ex.getMessage());
-
-            log.log(ex);
-        } else {
-            log.log();
-        }
-    }
-
-    private void publish(final FeedDto feed, final List<RssItem> items) {
-
-        for (final RssItem item : items) {
-            publisherService.publish(feed, item);
-        }
-    }
 }

@@ -21,6 +21,8 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.web.client.RestTemplate;
 
 import java.io.File;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 /**
  * Declare your services here!
@@ -32,6 +34,14 @@ public class AppConfig {
 
     @Value("${kiosk.repository.home}")
     String repositoryHome;
+
+    @Value("${kiosk.executor.threads}")
+    int executorThreads;
+
+    @Bean
+    ExecutorService executorService(){
+        return Executors.newFixedThreadPool(executorThreads);
+    }
 
     @Bean
     RestTemplate restTemplate(){
