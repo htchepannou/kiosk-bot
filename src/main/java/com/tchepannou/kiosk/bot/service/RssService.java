@@ -47,14 +47,16 @@ public class RssService {
     @Autowired
     ExecutorService executorService;
 
+
+    //-- Fetch
     public void fetch() throws RssException {
         final List<FeedDto> feeds = feedService.getAllRssFeeds();
         for (final FeedDto feed : feeds) {
-            executorService.submit(createWorker(feed));
+            executorService.submit(createFectcher(feed));
         }
     }
 
-    private Runnable createWorker(final FeedDto feed){
+    private Runnable createFectcher(final FeedDto feed){
         return new Runnable() {
             @Override
             public void run() {
@@ -71,53 +73,6 @@ public class RssService {
                 }
             }
         };
-    }
-
-    public void generate() {
-        final Map<WebsiteDto, FeedDto> feeds = loadFeedsByWebsite();
-        final List<WebsiteDto> websites = websiteService.getAllWebsite();
-        for (final WebsiteDto website : websites) {
-            final FeedDto feed = feeds.get(website);
-            if (feed == null || !feed.getUrl().startsWith("s3://")) {
-                continue;
-            }
-
-            Throwable ex = null;
-            try {
-                rssGenerator.generate(website);
-            } catch (final Exception e) {
-                ex = e;
-            } finally {
-                log(website, ex);
-            }
-        }
-    }
-
-    private Map<WebsiteDto, FeedDto> loadFeedsByWebsite() {
-        final List<FeedDto> feeds = feedService.getAllRssFeeds();
-        final Map<WebsiteDto, FeedDto> feedMap = new HashMap<>();
-        for (final FeedDto feed : feeds) {
-            feedMap.put(feed.getWebsite(), feed);
-        }
-        return feedMap;
-    }
-
-    private void log(final WebsiteDto website, final Throwable ex) {
-        final LogService log = new LogService(timeService);
-
-        log.add("WebsiteId", website.getId());
-        log.add("WebsiteName", website.getName());
-        log.add("WebsiteUrl", website.getUrl());
-
-        if (ex != null) {
-
-            log.add("Exception", ex.getClass().getName());
-            log.add("ExceptionMessage", ex.getMessage());
-            log.log(ex);
-
-        } else {
-            log.log();
-        }
     }
 
     private List<RssItem> fetch(final FeedDto feed, final SAXParser sax) throws SAXException {
@@ -163,6 +118,65 @@ public class RssService {
             log.add("ExceptionMessage", ex.getMessage());
 
             log.log(ex);
+        } else {
+            log.log();
+        }
+    }
+
+
+    //-- Generate
+    public void generate() {
+        final Map<WebsiteDto, FeedDto> feeds = loadFeedsByWebsite();
+        final List<WebsiteDto> websites = websiteService.getAllWebsite();
+        for (final WebsiteDto website : websites) {
+            executorService.execute(createGenerator(website, feeds));
+        }
+    }
+
+    private Runnable createGenerator(final WebsiteDto website, final Map<WebsiteDto, FeedDto> feeds){
+        return new Runnable() {
+            @Override
+            public void run() {
+                final FeedDto feed = feeds.get(website);
+                if (feed == null || !feed.getUrl().startsWith("s3://")) {
+                    return;
+                }
+
+                Throwable ex = null;
+                try {
+
+                    rssGenerator.generate(website);
+                } catch (final Exception e) {
+                    ex = e;
+                } finally {
+                    log(website, ex);
+                }
+            }
+        };
+    }
+
+    private Map<WebsiteDto, FeedDto> loadFeedsByWebsite() {
+        final List<FeedDto> feeds = feedService.getAllRssFeeds();
+        final Map<WebsiteDto, FeedDto> feedMap = new HashMap<>();
+        for (final FeedDto feed : feeds) {
+            feedMap.put(feed.getWebsite(), feed);
+        }
+        return feedMap;
+    }
+
+    private void log(final WebsiteDto website, final Throwable ex) {
+        final LogService log = new LogService(timeService);
+
+        log.add("WebsiteId", website.getId());
+        log.add("WebsiteName", website.getName());
+        log.add("WebsiteUrl", website.getUrl());
+
+        if (ex != null) {
+
+            log.add("Exception", ex.getClass().getName());
+            log.add("ExceptionMessage", ex.getMessage());
+            log.log(ex);
+
         } else {
             log.log();
         }
