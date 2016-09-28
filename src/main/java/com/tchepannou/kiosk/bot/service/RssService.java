@@ -11,7 +11,6 @@ import com.tchepannou.kiosk.core.service.UrlServiceProvider;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.xml.sax.SAXException;
 
-import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 import java.io.ByteArrayInputStream;
@@ -21,6 +20,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutorService;
 
 public class RssService {
     @Autowired
@@ -44,19 +44,33 @@ public class RssService {
     @Autowired
     RssGenerator rssGenerator;
 
-    public void fetch() throws RssException {
-        try {
-            final SAXParserFactory factory = SAXParserFactory.newInstance();
-            final SAXParser sax = factory.newSAXParser();
+    @Autowired
+    ExecutorService executorService;
 
-            final List<FeedDto> feeds = feedService.getAllRssFeeds();
-            for (final FeedDto feed : feeds) {
-                final List<RssItem> items = fetch(feed, sax);
-                publish(feed, items);
-            }
-        } catch (SAXException | ParserConfigurationException e) {
-            throw new RssException("XML error", e);
+    public void fetch() throws RssException {
+        final List<FeedDto> feeds = feedService.getAllRssFeeds();
+        for (final FeedDto feed : feeds) {
+            executorService.submit(createWorker(feed));
         }
+    }
+
+    private Runnable createWorker(final FeedDto feed){
+        return new Runnable() {
+            @Override
+            public void run() {
+                try {
+
+                    final SAXParserFactory factory = SAXParserFactory.newInstance();
+                    final SAXParser sax = factory.newSAXParser();
+
+                    final List<RssItem> items = fetch(feed, sax);
+                    publish(feed, items);
+
+                } catch (Exception e) {
+                    throw new RssException("XML error", e);
+                }
+            }
+        };
     }
 
     public void generate() {
@@ -128,13 +142,21 @@ public class RssService {
         return items;
     }
 
+    private void publish(final FeedDto feed, final List<RssItem> items) {
+
+        for (final RssItem item : items) {
+            publisherService.publish(feed, item);
+        }
+    }
+
     private void log(final FeedDto feed, final List<RssItem> items, final Throwable ex) {
         final LogService log = new LogService(timeService);
 
-        log.add("FeedURL", feed.getUrl());
+        log.add("Step", "Fetch");
+        log.add("ArticleCount", items.size());
         log.add("FeedId", feed.getId());
         log.add("FeedName", feed.getName());
-        log.add("ArticleCount", items.size());
+        log.add("FeedURL", feed.getUrl());
 
         if (ex != null) {
             log.add("Exception", ex.getClass().getName());
@@ -146,10 +168,4 @@ public class RssService {
         }
     }
 
-    private void publish(final FeedDto feed, final List<RssItem> items) {
-
-        for (final RssItem item : items) {
-            publisherService.publish(feed, item);
-        }
-    }
 }

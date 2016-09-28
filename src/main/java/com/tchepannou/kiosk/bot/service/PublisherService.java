@@ -75,6 +75,7 @@ public class PublisherService {
     ) {
         final LogService logger = new LogService(timeService);
 
+        logger.add("Step", "Publish");
         logger.add("ArticleURL", item.getLink());
         logger.add("ArticleTitle", item.getTitle());
         logger.add("FeedId", feed.getId());
