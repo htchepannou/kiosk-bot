@@ -4,7 +4,7 @@
         <title>RSS Title</title>
         <description>This is an example of an RSS feed</description>
         <link>http://www.example.com/main.html</link>
-        <lastBuildDate>Mon, 06 Sep 2010 00:01:00 +0000 </lastBuildDate>
+        <lastBuildDate>Mon, 06 Sep 2010 00:01:00 +0000</lastBuildDate>
         <pubDate>Sun, 06 Sep 2009 16:20:00 +0000</pubDate>
         <ttl>1800</ttl>
 
@@ -21,7 +21,14 @@
         </item>
         <item>
             <title>Example entry #2</title>
-            <description>Here is some text containing an interesting description #2</description>
+            <description>
+                <![CDATA[
+                    <img src="http://www.camer.be/UserFiles/file/images/special/Installation_Minsec_1.JPG" width="120px" alt="CAMEROUN :: Ministère de la Jeunesse et de lEducation civique : Les responsables nouvellement nommés installés hier à Yaoundé :: CAMEROON" title="CAMEROUN :: Ministère de la Jeunesse et de lEducation civique : Les responsables nouvellement nommés installés hier à Yaoundé :: CAMEROON"/>
+                    <p>
+                        Here is some text containing an interesting description #2
+                    </p>
+                ]]>
+                </description>
             <link>http://www.example.com/blog/post/2</link>
             <guid isPermaLink="true">7bd204c6-1655-4c27-aeee-53f933c5395f</guid>
             <pubDate>Sun, 07 Sep 2009 16:20:00 +0000</pubDate>
