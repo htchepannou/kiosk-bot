@@ -2,6 +2,7 @@ package com.tchepannou.kiosk.bot.support.rss;
 
 import com.tchepannou.kiosk.bot.domain.RssItem;
 import org.apache.commons.lang.StringEscapeUtils;
+import org.jsoup.Jsoup;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xml.sax.Attributes;
@@ -57,11 +58,11 @@ public class RssSaxHandler extends DefaultHandler {
 
         switch (qName.toLowerCase()) {
             case "title":
-                item.setTitle(StringEscapeUtils.unescapeHtml(text.toString()));
+                item.setTitle(html2text(text.toString()));
                 break;
 
             case "description":
-                item.setDescription(StringEscapeUtils.unescapeHtml(text.toString()));
+                item.setDescription(html2text(text.toString()));
                 break;
 
             case "language":
@@ -86,4 +87,7 @@ public class RssSaxHandler extends DefaultHandler {
         }
     }
 
+    private String html2text(final String html){
+        return Jsoup.parse(html).body().text();
+    }
 }
