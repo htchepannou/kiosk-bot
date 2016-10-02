@@ -5,11 +5,11 @@ import com.tchepannou.kiosk.bot.service.HtmlService;
 import com.tchepannou.kiosk.bot.service.PublisherService;
 import com.tchepannou.kiosk.bot.service.RssGenerator;
 import com.tchepannou.kiosk.bot.service.RssService;
-import com.tchepannou.kiosk.core.service.HttpService;
 import com.tchepannou.kiosk.bot.service.WebsiteService;
 import com.tchepannou.kiosk.client.dto.KioskClient;
 import com.tchepannou.kiosk.client.dto.impl.DefaultKioskClient;
 import com.tchepannou.kiosk.core.service.FileService;
+import com.tchepannou.kiosk.core.service.HttpService;
 import com.tchepannou.kiosk.core.service.TimeService;
 import com.tchepannou.kiosk.core.service.UrlServiceProvider;
 import org.apache.velocity.app.VelocityEngine;
@@ -107,5 +107,6 @@ public class AppConfig {
 
         return ve;
     }
+
 
 }
