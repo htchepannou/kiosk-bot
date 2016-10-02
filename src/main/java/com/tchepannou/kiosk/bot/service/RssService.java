@@ -47,16 +47,22 @@ public class RssService {
     @Autowired
     ExecutorService executorService;
 
-
     //-- Fetch
-    public void fetch() throws RssException {
+    public void fetch(final boolean force) throws RssException {
         final List<FeedDto> feeds = feedService.getAllRssFeeds();
         for (final FeedDto feed : feeds) {
-            executorService.submit(createFectcher(feed));
+            executorService.submit(createFectcher(feed, force));
         }
     }
 
-    private Runnable createFectcher(final FeedDto feed){
+    public void fetch(final long id, final boolean force) throws RssException {
+        final FeedDto feed = feedService.findById(id);
+        if (feed != null) {
+            executorService.submit(createFectcher(feed, force));
+        }
+    }
+
+    private Runnable createFectcher(final FeedDto feed, final boolean force) {
         return new Runnable() {
             @Override
             public void run() {
@@ -66,9 +72,9 @@ public class RssService {
                     final SAXParser sax = factory.newSAXParser();
 
                     final List<RssItem> items = fetch(feed, sax);
-                    publish(feed, items);
+                    publish(feed, items, force);
 
-                } catch (Exception e) {
+                } catch (final Exception e) {
                     throw new RssException("XML error", e);
                 }
             }
@@ -97,10 +103,10 @@ public class RssService {
         return items;
     }
 
-    private void publish(final FeedDto feed, final List<RssItem> items) {
+    private void publish(final FeedDto feed, final List<RssItem> items, final boolean force) {
 
         for (final RssItem item : items) {
-            publisherService.publish(feed, item);
+            publisherService.publish(feed, item, force);
         }
     }
 
@@ -123,7 +129,6 @@ public class RssService {
         }
     }
 
-
     //-- Generate
     public void generate() {
         final Map<WebsiteDto, FeedDto> feeds = loadFeedsByWebsite();
@@ -133,7 +138,7 @@ public class RssService {
         }
     }
 
-    private Runnable createGenerator(final WebsiteDto website, final Map<WebsiteDto, FeedDto> feeds){
+    private Runnable createGenerator(final WebsiteDto website, final Map<WebsiteDto, FeedDto> feeds) {
         return new Runnable() {
             @Override
             public void run() {

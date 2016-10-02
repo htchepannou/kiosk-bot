@@ -12,6 +12,16 @@ public class FeedService {
     @Autowired
     private KioskClient kiosk;
 
+    public FeedDto findById (long id){
+        final GetFeedListResponse response = kiosk.getFeeds();
+
+        return response.getFeeds()
+                .stream()
+                .filter(dto -> id == dto.getId())
+                .findFirst()
+                .get();
+    }
+
     public List<FeedDto> getAllRssFeeds() {
         final GetFeedListResponse response = kiosk.getFeeds();
 

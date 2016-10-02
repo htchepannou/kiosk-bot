@@ -28,12 +28,14 @@ public class PublisherService {
 
     public void publish(
             final FeedDto feed,
-            final RssItem item
+            final RssItem item,
+            final boolean force
     ) {
         PublishResponse response = null;
         try {
 
             final PublishRequest request = createPublishRequest(feed, item);
+            request.setForce(force);
             response = kiosk.publishArticle(request);
             log(feed, item, response, null);
 

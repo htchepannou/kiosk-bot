@@ -63,11 +63,14 @@ public class PublisherServiceTest {
         // WHEN
         final FeedDto feed = createFeed();
         final RssItem item = createRssItem();
-        service.publish(feed, item);
+        service.publish(feed, item, true);
 
         // THEN
         final ArgumentCaptor<PublishRequest> request = ArgumentCaptor.forClass(PublishRequest.class);
         verify(kiosk).publishArticle(request.capture());
+
+        assertThat(request.getValue().isForce()).isTrue();
+        assertThat(request.getValue().getFeedId()).isEqualTo(feed.getId());
 
         ArticleDataDto article = request.getValue().getArticle();
         assertThat(request.getValue().getFeedId()).isEqualTo(feed.getId());
@@ -78,6 +81,7 @@ public class PublisherServiceTest {
         assertThat(article.getSlug()).isEqualTo(item.getDescription());
         assertThat(article.getTitle()).isEqualTo(item.getTitle());
         assertThat(article.getUrl()).isEqualTo(item.getLink());
+
 
     }
 
