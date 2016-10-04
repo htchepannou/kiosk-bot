@@ -17,7 +17,8 @@ deploy:
   provider: s3
   access_key_id: "$AWS_ACCESS_KEY"
   secret_access_key: "$AWS_SECRET_KEY"
-  bucket: "repo.tchepannou"
+  bucket: "repository.tchepannou"
   skip_cleanup: true
+  region: us-west-1
   on:
     branch: master
