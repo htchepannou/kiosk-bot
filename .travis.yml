@@ -19,6 +19,6 @@ deploy:
   secret_access_key: "$AWS_SECRET_KEY"
   bucket: "repository.tchepannou"
   skip_cleanup: true
-  region: us-west-1
+  region: "us-east-1"
   on:
     branch: master
