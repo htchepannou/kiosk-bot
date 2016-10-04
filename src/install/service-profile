@@ -1,0 +1,3 @@
+SERVICE_NAME=kiosk-bot
+SERVICE_USER=webapp
+JVM_OPTS="-Xms=256m -Xmx512m -XX:+DisableExplicitGC -XX:NewRatio=4 -XX:SurvivorRatio=4 -XX:TargetSurvivorRatio=90 -XX:MaxTenuringThreshold=15 -XX:+UseConcMarkSweepGC -XX:+UseParNewGC -XX:CMSInitiatingOccupancyFraction=75"

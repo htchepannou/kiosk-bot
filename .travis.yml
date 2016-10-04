@@ -18,6 +18,7 @@ deploy:
   access_key_id: "$AWS_ACCESS_KEY"
   secret_access_key: "$AWS_SECRET_KEY"
   bucket: "repository.tchepannou"
-  skip_cleanup: true
+  upload-dir: kiosk-core
+  local_dir: target/deploy
   on:
     branch: master
