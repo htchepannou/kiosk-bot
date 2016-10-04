@@ -19,6 +19,5 @@ deploy:
   secret_access_key: "$AWS_SECRET_KEY"
   bucket: "repository.tchepannou"
   upload-dir: kiosk-core
-  local_dir: target/deploy
   on:
     branch: master
