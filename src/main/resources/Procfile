@@ -1,0 +1,1 @@
+web: java -jar kiosk-bot.jar -Xms=256m -Xmx=768m
