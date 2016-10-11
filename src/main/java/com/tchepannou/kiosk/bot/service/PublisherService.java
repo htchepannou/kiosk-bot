@@ -11,12 +11,16 @@ import com.tchepannou.kiosk.client.dto.PublishResponse;
 import com.tchepannou.kiosk.core.service.LogService;
 import com.tchepannou.kiosk.core.service.TimeService;
 import com.tchepannou.kiosk.core.service.UrlServiceProvider;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 
 public class PublisherService {
+    private static final Logger LOGGER = LoggerFactory.getLogger(PublisherService.class);
+
     @Autowired
     KioskClient kiosk;
 
@@ -55,7 +59,7 @@ public class PublisherService {
         urlServiceProvider.get(url).get(url, out);
 
         final ArticleDataDto article = new ArticleDataDto();
-        article.setContent(out.toString());
+        article.setContent(out.toString("utf-8"));
         article.setCountryCode(item.getCountry());
         article.setLanguageCode(item.getLanguage());
         article.setPublishedDate(timeService.format(item.getPublishedDate()));
@@ -66,6 +70,8 @@ public class PublisherService {
         final PublishRequest request = new PublishRequest();
         request.setFeedId(feed.getId());
         request.setArticle(article);
+
+        LOGGER.info("### {}\n{}", item.getLink(), request.getArticle().getContent());
         return request;
     }
 
