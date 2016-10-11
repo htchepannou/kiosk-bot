@@ -27,11 +27,10 @@ deploy:
   - provider: elasticbeanstalk
     app: kiosk-bot # Elastic Beanstalk app name
     env: kiosk-bot-prod # Elastic Beanstalk env name
-    bucket_name: elasticbeanstalk-us-east-1-828725992074
     region: us-east-1
     access_key_id: "$AWS_ACCESS_KEY"
     secret_access_key: "$AWS_SECRET_KEY"
-    bucket: "repository.tchepannou"
+    bucket_name: "repository.tchepannou"
     zip_file: "kiosk-bot/$$TRAVIS_COMMIT/kiosk-bot.jar"
     on:
       branch: master
