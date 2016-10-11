@@ -19,7 +19,7 @@ deploy:
     secret_access_key: "$AWS_SECRET_KEY"
     bucket: "repository.tchepannou"
     skip_cleanup: true
-    upload-dir: kiosk-bot
+    upload-dir: kiosk-bot/$TRAVIS_COMMIT
     local_dir: target/deploy
     on:
       branch: master
