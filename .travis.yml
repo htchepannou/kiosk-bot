@@ -6,9 +6,6 @@ jdk:
 script:
   - mvn clean install
 
-after_success:
-  - ./after_success.sh
-
 notifications:
   email:
   - herve.tchepannou@gmail.com
@@ -23,15 +20,15 @@ deploy:
     local_dir: target/deploy
     on:
       branch: master
-
-  - provider: elasticbeanstalk
-    app: kiosk-bot # Elastic Beanstalk app name
-    env: kiosk-bot-prod # Elastic Beanstalk env name
-    region: us-east-1
-    access_key_id: "$AWS_ACCESS_KEY"
-    secret_access_key: "$AWS_SECRET_KEY"
-    skip_cleanup: true
-    zip_file: target/kiosk-bot.jar
-    bucket_name: elasticbeanstalk-us-east-1-828725992074
-    on:
-      branch: master
+#
+#  - provider: elasticbeanstalk
+#    app: kiosk-bot # Elastic Beanstalk app name
+#    env: kiosk-bot-prod # Elastic Beanstalk env name
+#    region: us-east-1
+#    access_key_id: "$AWS_ACCESS_KEY"
+#    secret_access_key: "$AWS_SECRET_KEY"
+#    skip_cleanup: true
+#    zip_file: target/kiosk-bot.jar
+#    bucket_name: elasticbeanstalk-us-east-1-828725992074
+#    on:
+#      branch: master

@@ -20,16 +20,13 @@ public class RssController {
     RssService rssService;
 
     @Async
-    @ApiOperation("Fetch data from all Rss feeds")
+    @ApiOperation("Run the RSS bot")
     @RequestMapping(
-            value = "/fetch",
-            params = {"force"},
+            value = "/run",
             method = RequestMethod.GET
     )
-    public void fetch(
-            @ApiParam(defaultValue = "false", allowableValues = "false,true") final String force
-    ) {
-        rssService.fetch(Boolean.parseBoolean(force));
+    public void run() {
+        rssService.run();
     }
 
     @Async
@@ -39,17 +36,10 @@ public class RssController {
             params = {"force"},
             method = RequestMethod.GET
     )
-    public void fetchFeed(
+    public void fetch(
             @PathVariable final String feedId,
             @ApiParam(defaultValue = "false", allowableValues = "false,true") final String force
     ) {
         rssService.fetch(Long.parseLong(feedId), Boolean.parseBoolean(force));
-    }
-
-    @Async
-    @ApiOperation("Generate RSS feeds")
-    @RequestMapping(value = "/generate", method = RequestMethod.GET)
-    public void generate() {
-        rssService.generate();
     }
 }

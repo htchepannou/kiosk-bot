@@ -9,6 +9,7 @@ import com.tchepannou.kiosk.core.service.LogService;
 import com.tchepannou.kiosk.core.service.TimeService;
 import com.tchepannou.kiosk.core.service.UrlServiceProvider;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.xml.sax.SAXException;
 
 import javax.xml.parsers.SAXParser;
@@ -47,7 +48,13 @@ public class RssService {
     @Autowired
     ExecutorService executorService;
 
-    //-- Fetch
+    //-- Public
+    @Scheduled(cron = "${kiosk.rss.cron}")
+    public void run() {
+        generate();
+        fetch(true);
+    }
+
     public void fetch(final boolean force) throws RssException {
         final List<FeedDto> feeds = feedService.getAllRssFeeds();
         for (final FeedDto feed : feeds) {
@@ -62,6 +69,15 @@ public class RssService {
         }
     }
 
+    public void generate() {
+        final Map<WebsiteDto, FeedDto> feeds = loadFeedsByWebsite();
+        final List<WebsiteDto> websites = websiteService.getAllWebsite();
+        for (final WebsiteDto website : websites) {
+            generate(website, feeds);
+        }
+    }
+
+    //-- Private
     private Runnable createFectcher(final FeedDto feed, final boolean force) {
         return new Runnable() {
             @Override
@@ -129,35 +145,21 @@ public class RssService {
         }
     }
 
-    //-- Generate
-    public void generate() {
-        final Map<WebsiteDto, FeedDto> feeds = loadFeedsByWebsite();
-        final List<WebsiteDto> websites = websiteService.getAllWebsite();
-        for (final WebsiteDto website : websites) {
-            executorService.execute(createGenerator(website, feeds));
+    private void generate(final WebsiteDto website, final Map<WebsiteDto, FeedDto> feeds) {
+        final FeedDto feed = feeds.get(website);
+        if (feed == null || !feed.getUrl().startsWith("s3://")) {
+            return;
         }
-    }
 
-    private Runnable createGenerator(final WebsiteDto website, final Map<WebsiteDto, FeedDto> feeds) {
-        return new Runnable() {
-            @Override
-            public void run() {
-                final FeedDto feed = feeds.get(website);
-                if (feed == null || !feed.getUrl().startsWith("s3://")) {
-                    return;
-                }
+        try {
 
-                Throwable ex = null;
-                try {
+            rssGenerator.generate(website);
 
-                    rssGenerator.generate(website);
-                } catch (final Exception e) {
-                    ex = e;
-                } finally {
-                    log(website, ex);
-                }
-            }
-        };
+        } catch (final Exception ex) {
+
+            log(website, ex);
+
+        }
     }
 
     private Map<WebsiteDto, FeedDto> loadFeedsByWebsite() {
@@ -172,6 +174,7 @@ public class RssService {
     private void log(final WebsiteDto website, final Throwable ex) {
         final LogService log = new LogService(timeService);
 
+        log.add("Step", "Generate");
         log.add("WebsiteId", website.getId());
         log.add("WebsiteName", website.getName());
         log.add("WebsiteUrl", website.getUrl());

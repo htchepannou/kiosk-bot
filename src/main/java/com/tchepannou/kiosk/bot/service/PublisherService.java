@@ -71,7 +71,6 @@ public class PublisherService {
         request.setFeedId(feed.getId());
         request.setArticle(article);
 
-        LOGGER.info("### {}\n{}", item.getLink(), request.getArticle().getContent());
         return request;
     }
 

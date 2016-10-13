@@ -75,6 +75,7 @@ public class RssGenerator {
     private void log(final String url, final WebsiteDto website, final RssItem item, final Throwable ex) {
         final LogService log = new LogService(timeService);
 
+        log.add("Step", "Generate");
         log.add("WebsiteId", website.getId());
         log.add("WebsiteName", website.getName());
         log.add("Url", url);
