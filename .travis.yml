@@ -6,9 +6,6 @@ jdk:
 script:
   - mvn clean install
 
-after_success:
-  - ./after_success.sh
-
 notifications:
   email:
   - herve.tchepannou@gmail.com
