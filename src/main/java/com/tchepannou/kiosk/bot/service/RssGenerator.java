@@ -41,7 +41,7 @@ public class RssGenerator {
             urlServiceProvider.get(websiteUrl).get(websiteUrl, out);
 
             // Generate the RSS
-            final String html = out.toString();
+            final String html = out.toString("utf-8");
             final List<String> urls = htmlService.extractUrls(html, website);
             final Map<String, RssItem> items = new LinkedHashMap<>();
             for (final String url : urls) {
@@ -66,7 +66,7 @@ public class RssGenerator {
 
             // Store it
             final String key = "s3://rss/" + website.getId() + ".xml";
-            urlServiceProvider.get(key).put(key, new ByteArrayInputStream(rss.getBytes()));
+            urlServiceProvider.get(key).put(key, new ByteArrayInputStream(rss.getBytes("utf-8")));
 
             return key;
         }

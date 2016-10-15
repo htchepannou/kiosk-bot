@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@Api(basePath = "/kiosk/v1/bots", value = "RSS API")
+@Api(basePath = "/kiosk/v1/rss", value = "RSS API")
 @RequestMapping(value = "/kiosk/v1/rss", produces = MediaType.APPLICATION_JSON_VALUE)
 public class RssController {
     @Autowired
