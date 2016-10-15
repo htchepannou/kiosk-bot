@@ -42,4 +42,11 @@ public class RssController {
     ) {
         rssService.fetch(Long.parseLong(feedId), Boolean.parseBoolean(force));
     }
+
+    @Async
+    @ApiOperation("Generate RSS feeds")
+    @RequestMapping(value = "/generate", method = RequestMethod.GET)
+    public void generate() {
+        rssService.generate();
+    }
 }

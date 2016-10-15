@@ -103,7 +103,7 @@ public class RssGenerator {
         final ByteArrayOutputStream out = new ByteArrayOutputStream();
         urlServiceProvider.get(url).get(url, out);
 
-        final String html = out.toString();
+        final String html = out.toString("utf-8");
         return htmlService.toRssItem(url, html, website);
     }
 
@@ -132,7 +132,7 @@ public class RssGenerator {
         final String path = new URL(url).getPath();
 
         return url.startsWith(website.getUrl())
-                && (prefix == null || (path.length()>prefix.length() && path.startsWith(prefix)))
+                && (prefix == null || path.startsWith(prefix))
                 && (suffix == null || path.endsWith(suffix))
                 ;
     }
