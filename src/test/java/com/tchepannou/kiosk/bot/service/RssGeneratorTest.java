@@ -2,6 +2,7 @@ package com.tchepannou.kiosk.bot.service;
 
 import com.google.common.io.Files;
 import com.tchepannou.kiosk.bot.domain.RssItem;
+import com.tchepannou.kiosk.client.dto.KioskClient;
 import com.tchepannou.kiosk.client.dto.WebsiteDto;
 import com.tchepannou.kiosk.core.service.FileService;
 import com.tchepannou.kiosk.core.service.HttpService;
@@ -21,6 +22,7 @@ import org.mockito.Mock;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.mockito.stubbing.Answer;
+import org.springframework.beans.BeanUtils;
 
 import java.io.OutputStream;
 import java.io.Writer;
@@ -32,6 +34,7 @@ import static com.tchepannou.kiosk.bot.Fixture.createRssItem;
 import static com.tchepannou.kiosk.bot.Fixture.createWebsite;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -55,6 +58,9 @@ public class RssGeneratorTest {
 
     @Mock
     FileService fileService;
+
+    @Mock
+    KioskClient kiosk;
 
     @InjectMocks
     RssGenerator generator;
@@ -115,6 +121,48 @@ public class RssGeneratorTest {
     }
 
     @Test
+    public void shouldNotGenerateArticleAlreadyPublished() throws Exception {
+        // Given
+        final WebsiteDto website = createWebsite();
+        website.setArticleUrlPrefix(null);
+        website.setArticleUrlSuffix(null);
+
+        final RssItem item1 = createRssItem();
+        item1.setLink(website.getUrl() + "/foo.html");
+
+        final RssItem item2 = createRssItem();
+        item2.setLink(website.getUrl() + "/bar.html");
+
+        when(htmlService.toRssItem(eq(item1.getLink()), any(), any())).thenReturn(item1);
+        when(htmlService.toRssItem(eq(item2.getLink()), any(), any())).thenReturn(item2);
+
+
+        final String html = "foo";
+        doAnswer(get(html)).when(httpService).get(any(), any());
+        when(htmlService.extractUrls(html, website)).thenReturn(
+                Arrays.asList(
+                        item1.getLink(),
+                        item2.getLink()
+                )
+        );
+
+        when(kiosk.isArticleUrlPublished(item1.getLink())).thenReturn(true);
+        when(kiosk.isArticleUrlPublished(item2.getLink())).thenReturn(false);
+
+        // When
+        generator.generate(website);
+
+        // Then
+        final ArgumentCaptor<String> template = ArgumentCaptor.forClass(String.class);
+        final ArgumentCaptor<String> encoding = ArgumentCaptor.forClass(String.class);
+        final ArgumentCaptor<Context> context = ArgumentCaptor.forClass(Context.class);
+        final ArgumentCaptor<Writer> writer = ArgumentCaptor.forClass(Writer.class);
+        verify(velocity).mergeTemplate(template.capture(), encoding.capture(), context.capture(), writer.capture());
+
+        assertThat((Collection) context.getValue().get("items")).containsExactly(item2);
+    }
+
+    @Test
     public void shouldNotGenerateSameArticleTwice() throws Exception {
         // Given
         final WebsiteDto website = createWebsite();
@@ -126,12 +174,14 @@ public class RssGeneratorTest {
         when(htmlService.extractUrls(html, website)).thenReturn(
                 Arrays.asList(
                         website.getUrl() + "/articles/foo.html",
-                        website.getUrl() + "/articles/bar.html"
+                        website.getUrl() + "/articles/foo.html"
                 )
         );
 
         final RssItem item1 = createRssItem();
-        final RssItem item2 = createRssItem();
+        final RssItem item2 = new RssItem();
+        BeanUtils.copyProperties(item1, item2);;
+
         item2.setTitle(item1.getTitle());
         when(htmlService.toRssItem(any(), any(), any()))
                 .thenReturn(item1)
@@ -139,7 +189,7 @@ public class RssGeneratorTest {
         ;
 
         // When
-        final String key = generator.generate(website);
+        generator.generate(website);
 
         // Then
         final ArgumentCaptor<String> template = ArgumentCaptor.forClass(String.class);
@@ -148,7 +198,7 @@ public class RssGeneratorTest {
         final ArgumentCaptor<Writer> writer = ArgumentCaptor.forClass(Writer.class);
         verify(velocity).mergeTemplate(template.capture(), encoding.capture(), context.capture(), writer.capture());
 
-        assertThat((Collection) context.getValue().get("items")).containsAll(Arrays.asList(item1));
+        assertThat((Collection) context.getValue().get("items")).containsExactly(item1);
     }
 
     @Test

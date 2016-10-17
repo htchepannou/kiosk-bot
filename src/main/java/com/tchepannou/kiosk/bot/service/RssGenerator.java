@@ -2,6 +2,7 @@ package com.tchepannou.kiosk.bot.service;
 
 import com.tchepannou.kiosk.bot.domain.RssItem;
 import com.tchepannou.kiosk.bot.support.rss.RssSaxHandler;
+import com.tchepannou.kiosk.client.dto.KioskClient;
 import com.tchepannou.kiosk.client.dto.WebsiteDto;
 import com.tchepannou.kiosk.core.service.LogService;
 import com.tchepannou.kiosk.core.service.TimeService;
@@ -35,7 +36,10 @@ public class RssGenerator {
     @Autowired
     UrlServiceProvider urlServiceProvider;
 
-    final String generate(final WebsiteDto website) throws IOException {
+    @Autowired
+    KioskClient kiosk;
+
+    public final String generate(final WebsiteDto website) throws IOException {
         try (final ByteArrayOutputStream out = new ByteArrayOutputStream()) {
             final String websiteUrl = website.getUrl();
             urlServiceProvider.get(websiteUrl).get(websiteUrl, out);
@@ -46,6 +50,10 @@ public class RssGenerator {
             final Map<String, RssItem> items = new LinkedHashMap<>();
             for (final String url : urls) {
                 if (!isArticle(url, website)) {
+                    continue;
+                }
+                if (kiosk.isArticleUrlPublished(url)){
+                    log(url, website, null, null);
                     continue;
                 }
 
@@ -76,12 +84,14 @@ public class RssGenerator {
         final LogService log = new LogService(timeService);
 
         log.add("Step", "Generate");
+        log.add("ArticleUrl", url);
         log.add("WebsiteId", website.getId());
         log.add("WebsiteName", website.getName());
-        log.add("Url", url);
 
         if (item != null) {
-            log.add("Title", item.getTitle());
+            log.add("ArticleTitle", item.getTitle());
+        } else {
+            log.add("ArticleAlreadyPublished", true);
         }
 
         if (ex == null) {
