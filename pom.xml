@@ -20,7 +20,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
         <kiosk-core.version>1.0-SNAPSHOT</kiosk-core.version>
-        <kiosk-client.version>1.0-SNAPSHOT</kiosk-client.version>
+        <kiosk-client.version>1.0.0</kiosk-client.version>
         <commons-io.version>2.4</commons-io.version>
         <commons-lang.version>2.6</commons-lang.version>
         <springfox-swagger.version>2.3.1</springfox-swagger.version>
