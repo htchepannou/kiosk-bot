@@ -62,6 +62,9 @@ public class RssGeneratorTest {
     @Mock
     KioskClient kiosk;
 
+    @Mock
+    MetricsService metricsService;
+
     @InjectMocks
     RssGenerator generator;
 

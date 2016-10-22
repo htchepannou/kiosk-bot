@@ -1,7 +1,9 @@
 package com.tchepannou.kiosk.bot.service;
 
 import com.tchepannou.kiosk.bot.domain.RssItem;
+import com.tchepannou.kiosk.bot.support.rss.MetricsConstants;
 import com.tchepannou.kiosk.bot.support.rss.RssSaxHandler;
+import com.tchepannou.kiosk.client.dto.FeedDto;
 import com.tchepannou.kiosk.client.dto.KioskClient;
 import com.tchepannou.kiosk.client.dto.WebsiteDto;
 import com.tchepannou.kiosk.core.service.LogService;
@@ -19,11 +21,18 @@ import java.io.StringWriter;
 import java.net.URL;
 import java.text.SimpleDateFormat;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
 public class RssGenerator {
+    @Autowired
+    FeedService feedService;
+
+    @Autowired
+    WebsiteService websiteService;
+
     @Autowired
     HtmlService htmlService;
 
@@ -37,9 +46,25 @@ public class RssGenerator {
     UrlServiceProvider urlServiceProvider;
 
     @Autowired
+    MetricsService metricsService;
+
+    @Autowired
     KioskClient kiosk;
 
-    public final String generate(final WebsiteDto website) throws IOException {
+    public void generate() {
+        final Map<WebsiteDto, FeedDto> feeds = loadFeedsByWebsite();
+        final List<WebsiteDto> websites = websiteService.getAllWebsite();
+        for (final WebsiteDto website : websites) {
+            final FeedDto feed = feeds.get(website);
+            if (feed == null || !feed.getUrl().startsWith("s3://")) {
+                continue;
+            }
+
+            generate(website);
+        }
+    }
+
+    protected String generate(final WebsiteDto website) {
         try (final ByteArrayOutputStream out = new ByteArrayOutputStream()) {
             final String websiteUrl = website.getUrl();
             urlServiceProvider.get(websiteUrl).get(websiteUrl, out);
@@ -52,21 +77,25 @@ public class RssGenerator {
                 if (!isArticle(url, website)) {
                     continue;
                 }
-                if (kiosk.isArticleUrlPublished(url)){
+                if (kiosk.isArticleUrlPublished(url)) {
                     log(url, website, null, null);
                     continue;
                 }
 
+                Throwable ex = null;
+                RssItem item = null;
                 try {
-                    final RssItem item = toRssItem(url, website);
+                    item = toRssItem(url, website);
                     final String title = item.getTitle();
                     if (isValid(item) && !items.containsKey(title)) {
                         // prevent same article under different URLs
                         items.put(title, item);
-                        log(url, website, item, null);
                     }
                 } catch (final Exception e) {
-                    log(url, website, null, e);
+                    ex = e;
+                } finally {
+                    log(url, website, item, null);
+                    markMetrics(website, ex);
                 }
             }
 
@@ -77,7 +106,19 @@ public class RssGenerator {
             urlServiceProvider.get(key).put(key, new ByteArrayInputStream(rss.getBytes("utf-8")));
 
             return key;
+        } catch (final Exception e) {
+            markMetrics(website, e);
+            return null;
         }
+    }
+
+    private Map<WebsiteDto, FeedDto> loadFeedsByWebsite() {
+        final List<FeedDto> feeds = feedService.getAllRssFeeds();
+        final Map<WebsiteDto, FeedDto> feedMap = new HashMap<>();
+        for (final FeedDto feed : feeds) {
+            feedMap.put(feed.getWebsite(), feed);
+        }
+        return feedMap;
     }
 
     private void log(final String url, final WebsiteDto website, final RssItem item, final Throwable ex) {
@@ -145,5 +186,17 @@ public class RssGenerator {
                 && (prefix == null || path.startsWith(prefix))
                 && (suffix == null || path.endsWith(suffix))
                 ;
+    }
+
+    private void markMetrics(final WebsiteDto website, final Throwable ex) {
+        markMeter(
+                ex == null ? MetricsConstants.GENERATE_URL_SUCCESS : MetricsConstants.GENERATE_URL_ERROR,
+                website
+        );
+    }
+
+    private void markMeter(final String name, final WebsiteDto website) {
+        metricsService.markMeter(name);
+        metricsService.markMeter(name, String.valueOf(website.getId()));
     }
 }

@@ -10,4 +10,7 @@ public interface MetricsConstants {
     String FETCH_SUCCESS = "FetchSuccess";
     String FETCH_ERROR = "FetchError";
     String FETCH_LATENCY = "FetchLatency";
+
+    String GENERATE_URL_SUCCESS = "GenerateUrlSuccess";
+    String GENERATE_URL_ERROR = "GenerateUrlError";
 }
