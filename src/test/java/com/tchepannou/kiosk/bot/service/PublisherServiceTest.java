@@ -43,8 +43,12 @@ public class PublisherServiceTest {
     @Mock
     TimeService timeService;
 
+    @Mock
+    MetricsService metricsService;
+
     @InjectMocks
     PublisherService service;
+
 
     @Test
     public void shouldPublish() throws Exception {

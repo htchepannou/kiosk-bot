@@ -2,6 +2,7 @@ package com.tchepannou.kiosk.bot.config;
 
 import com.amazonaws.services.s3.AmazonS3;
 import com.tchepannou.kiosk.bot.service.FeedService;
+import com.tchepannou.kiosk.bot.service.FetcherService;
 import com.tchepannou.kiosk.bot.service.HtmlService;
 import com.tchepannou.kiosk.bot.service.PublisherService;
 import com.tchepannou.kiosk.bot.service.RssGenerator;
@@ -62,6 +63,11 @@ public class AppConfig {
     @Bean
     KioskClient kioskClient() {
         return new DefaultKioskClient(apiUrl, restTemplate());
+    }
+
+    @Bean
+    FetcherService fetcherService () {
+        return new FetcherService();
     }
 
     @Bean

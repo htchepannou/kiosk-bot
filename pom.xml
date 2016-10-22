@@ -23,7 +23,8 @@
         <kiosk-client.version>1.0.0</kiosk-client.version>
         <commons-io.version>2.4</commons-io.version>
         <commons-lang.version>2.6</commons-lang.version>
-        <springfox-swagger.version>2.3.1</springfox-swagger.version>
+        <metrics.version>3.1.0</metrics.version>
+        <springfox-swagger.version>2.6.0</springfox-swagger.version>
         <velocity.version>1.7</velocity.version>
 
         <junit.version>4.12</junit.version>
@@ -110,6 +111,11 @@
             <groupId>commons-lang</groupId>
             <artifactId>commons-lang</artifactId>
             <version>${commons-lang.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.dropwizard.metrics</groupId>
+            <artifactId>metrics-core</artifactId>
+            <version>${metrics.version}</version>
         </dependency>
 
         <!-- TEST -->

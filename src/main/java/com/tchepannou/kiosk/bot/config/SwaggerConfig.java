@@ -27,8 +27,8 @@ public class SwaggerConfig {
     @Value("${swagger.service.description}")
     private String serviceDescription;
 
-    @Value("${swagger.service.termsPath}")
-    private String serviceTermsPath;
+    @Value("${swagger.service.termsUrl}")
+    private String serviceTermsUrl;
 
     @Value("${swagger.service.email}")
     private String serviceEmail;
@@ -36,8 +36,8 @@ public class SwaggerConfig {
     @Value("${swagger.service.licenceType}")
     private String serviceLicenceType;
 
-    @Value("${swagger.service.licencePath}")
-    private String serviceLicencePath;
+    @Value("${swagger.service.licenceUrl}")
+    private String serviceLicenceUrl;
 
 
     @Bean
@@ -61,10 +61,10 @@ public class SwaggerConfig {
         return new ApiInfoBuilder()
                 .title(serviceTitle)
                 .description(serviceDescription)
-                .termsOfServiceUrl(serviceTermsPath)
+                .termsOfServiceUrl(serviceTermsUrl)
                 .contact(serviceEmail)
                 .license(serviceLicenceType)
-                .licenseUrl(serviceLicencePath)
+                .licenseUrl(serviceLicenceUrl)
                 .version(serviceVersion)
                 .build();
     }

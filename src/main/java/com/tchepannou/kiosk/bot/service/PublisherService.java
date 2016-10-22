@@ -1,6 +1,8 @@
 package com.tchepannou.kiosk.bot.service;
 
+import com.codahale.metrics.Timer;
 import com.tchepannou.kiosk.bot.domain.RssItem;
+import com.tchepannou.kiosk.bot.support.rss.MetricsConstants;
 import com.tchepannou.kiosk.client.dto.ArticleDataDto;
 import com.tchepannou.kiosk.client.dto.ErrorDto;
 import com.tchepannou.kiosk.client.dto.FeedDto;
@@ -11,16 +13,14 @@ import com.tchepannou.kiosk.client.dto.PublishResponse;
 import com.tchepannou.kiosk.core.service.LogService;
 import com.tchepannou.kiosk.core.service.TimeService;
 import com.tchepannou.kiosk.core.service.UrlServiceProvider;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.Async;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.util.List;
 
 public class PublisherService {
-    private static final Logger LOGGER = LoggerFactory.getLogger(PublisherService.class);
-
     @Autowired
     KioskClient kiosk;
 
@@ -30,23 +30,38 @@ public class PublisherService {
     @Autowired
     TimeService timeService;
 
-    public void publish(
+    @Autowired
+    MetricsService metricsService;
+
+    @Async
+    public void publish(final FeedDto feed, final List<RssItem> items, final boolean force) {
+        for (final RssItem item : items) {
+            publish(feed, item, force);
+        }
+    }
+
+    protected void publish(
             final FeedDto feed,
             final RssItem item,
             final boolean force
     ) {
+        Throwable ex = null;
         PublishResponse response = null;
+
+        final Timer.Context tc = metricsService.beginTimer(MetricsConstants.PUBLISH_LATENCY);
         try {
 
             final PublishRequest request = createPublishRequest(feed, item);
             request.setForce(force);
             response = kiosk.publishArticle(request);
-            log(feed, item, response, null);
 
-        } catch (final Exception ex) {
+        } catch (final Exception e) {
 
+            ex = e;
+
+        } finally {
             log(feed, item, response, ex);
-
+            markMetrics(tc, feed, ex);
         }
     }
 
@@ -108,5 +123,20 @@ public class PublisherService {
                 logger.log(ex);
             }
         }
+    }
+
+    private void markMetrics(final Timer.Context tc, final FeedDto feed, final Throwable ex) {
+        metricsService.stopTimer(tc);
+
+        if (ex == null) {
+            markMeter(MetricsConstants.PUBLISH_SUCCESS, feed);
+        } else {
+            markMeter(MetricsConstants.PUBLISH_ERROR, feed);
+        }
+    }
+
+    private void markMeter(final String name, final FeedDto feed) {
+        metricsService.markMeter(name);
+        metricsService.markMeter(name, String.valueOf(feed.getId()));
     }
 }
