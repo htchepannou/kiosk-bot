@@ -64,6 +64,12 @@ public class RssGenerator {
         }
     }
 
+    public void generate(final String id) {
+        final WebsiteDto website = websiteService.get(id);
+        generate(website);
+    }
+
+
     protected String generate(final WebsiteDto website) {
         try (final ByteArrayOutputStream out = new ByteArrayOutputStream()) {
             final String websiteUrl = website.getUrl();

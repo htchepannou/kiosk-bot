@@ -1,5 +1,6 @@
 package com.tchepannou.kiosk.bot.controller;
 
+import com.tchepannou.kiosk.bot.service.RssGenerator;
 import com.tchepannou.kiosk.bot.service.RssService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -17,7 +18,10 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping(value = "/kiosk/v1/rss", produces = MediaType.APPLICATION_JSON_VALUE)
 public class RssController {
     @Autowired
-    RssService rssService;
+    RssService service;
+
+    @Autowired
+    RssGenerator generator;
 
     @Async
     @ApiOperation("Run the RSS bot")
@@ -26,7 +30,7 @@ public class RssController {
             method = RequestMethod.GET
     )
     public void run() {
-        rssService.run();
+        service.run();
     }
 
     @Async
@@ -40,6 +44,27 @@ public class RssController {
             @PathVariable final String feedId,
             @ApiParam(defaultValue = "false", allowableValues = "false,true") final String force
     ) {
-        rssService.fetch(Long.parseLong(feedId), Boolean.parseBoolean(force));
+        service.fetch(Long.parseLong(feedId), Boolean.parseBoolean(force));
+    }
+
+    @Async
+    @ApiOperation("Generate RSS feeds")
+    @RequestMapping(
+            value = "/generate",
+            method = RequestMethod.GET
+    )
+    public void generate(){
+        generator.generate();
+    }
+
+
+    @Async
+    @ApiOperation("Generate RSS feeds of 1 website")
+    @RequestMapping(
+            value = "/generate/website/{websiteId}",
+            method = RequestMethod.GET
+    )
+    public void generate(@PathVariable("websiteId") final String websiteId){
+        generator.generate(websiteId);
     }
 }

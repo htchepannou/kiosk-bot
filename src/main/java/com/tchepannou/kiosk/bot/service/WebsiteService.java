@@ -11,6 +11,9 @@ public class WebsiteService {
     @Autowired
     private KioskClient kiosk;
 
+    public WebsiteDto get(String id){
+        return kiosk.getWebsite(id).getWebsite();
+    }
     public List<WebsiteDto> getAllWebsite() {
         final GetWebsiteListResponse response = kiosk.getWebsites();
 
