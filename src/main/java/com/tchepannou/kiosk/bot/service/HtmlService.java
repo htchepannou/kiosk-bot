@@ -24,7 +24,7 @@ public class HtmlService {
         final Set<String> urls = doc.select("a")
                 .stream()
                 .map(e -> e.attr("abs:href"))
-                .filter(href -> isHttp(href) && hasLocation(href))
+                .filter(href -> isHttp(href))
                 .collect(Collectors.toSet());
 
         return new ArrayList<>(urls);
@@ -79,9 +79,5 @@ public class HtmlService {
 
     private boolean isHttp(final String url) {
         return url != null && url.toLowerCase().startsWith("http");
-    }
-
-    private boolean hasLocation(final String url) {
-        return url.contains("#");
     }
 }
