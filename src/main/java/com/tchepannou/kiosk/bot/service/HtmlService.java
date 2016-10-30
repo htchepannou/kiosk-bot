@@ -18,13 +18,13 @@ public class HtmlService {
     @Autowired
     TimeService timeService;
 
-    public List<String> extractUrls(final String html, WebsiteDto website) throws IOException {
+    public List<String> extractUrls(final String html, final WebsiteDto website) throws IOException {
         final Document doc = Jsoup.parse(html);
         doc.setBaseUri(website.getUrl());
         final Set<String> urls = doc.select("a")
                 .stream()
                 .map(e -> e.attr("abs:href"))
-                .filter(href -> isHttp(href))
+                .filter(href -> isHttp(href) && hasLocation(href))
                 .collect(Collectors.toSet());
 
         return new ArrayList<>(urls);
@@ -79,5 +79,9 @@ public class HtmlService {
 
     private boolean isHttp(final String url) {
         return url != null && url.toLowerCase().startsWith("http");
+    }
+
+    private boolean hasLocation(final String url) {
+        return url.contains("#");
     }
 }
