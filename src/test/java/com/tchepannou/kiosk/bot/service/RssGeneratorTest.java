@@ -205,6 +205,44 @@ public class RssGeneratorTest {
     }
 
     @Test
+    public void shouldNotGenerateUrlWithDash() throws Exception {
+        // Given
+        final WebsiteDto website = createWebsite();
+        website.setArticleUrlPrefix(null);
+        website.setArticleUrlSuffix(null);
+
+        final String html = "foo";
+        doAnswer(get(html)).when(httpService).get(any(), any());
+        when(htmlService.extractUrls(html, website)).thenReturn(
+                Arrays.asList(
+                        website.getUrl() + "/articles/foo.html",
+                        website.getUrl() + "/articles/bar.html#comment"
+                )
+        );
+
+        final RssItem item1 = createRssItem();
+        final RssItem item2 = createRssItem();
+
+        item2.setTitle(item1.getTitle());
+        when(htmlService.toRssItem(any(), any(), any()))
+                .thenReturn(item1)
+                .thenReturn(item2)
+        ;
+
+        // When
+        generator.generate(website);
+
+        // Then
+        final ArgumentCaptor<String> template = ArgumentCaptor.forClass(String.class);
+        final ArgumentCaptor<String> encoding = ArgumentCaptor.forClass(String.class);
+        final ArgumentCaptor<Context> context = ArgumentCaptor.forClass(Context.class);
+        final ArgumentCaptor<Writer> writer = ArgumentCaptor.forClass(Writer.class);
+        verify(velocity).mergeTemplate(template.capture(), encoding.capture(), context.capture(), writer.capture());
+
+        assertThat((Collection) context.getValue().get("items")).containsExactly(item1);
+    }
+
+    @Test
     @Ignore
     public void shouldGenerateCameroonTribune() throws Exception {
         final UrlServiceProvider provider = new UrlServiceProvider();

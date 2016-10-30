@@ -80,7 +80,7 @@ public class RssGenerator {
             final List<String> urls = htmlService.extractUrls(html, website);
             final Map<String, RssItem> items = new LinkedHashMap<>();
             for (final String url : urls) {
-                if (!url.contains("#") && !isArticle(url, website)) {
+                if (url.contains("#") || !isArticle(url, website)) {
                     continue;
                 }
                 if (kiosk.isArticleUrlPublished(url)) {
